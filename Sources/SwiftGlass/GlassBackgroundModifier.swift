@@ -7,6 +7,19 @@
 
 import SwiftUI
 
+/// Type-erased shape wrapper
+private struct AnyShape: Shape {
+    private let _path: (CGRect) -> Path
+    
+    init<S: Shape>(_ shape: S) {
+        _path = shape.path(in:)
+    }
+    
+    func path(in rect: CGRect) -> Path {
+        _path(rect)
+    }
+}
+
 @available(iOS 15.0, macOS 14.0, watchOS 10.0, tvOS 15.0, visionOS 1.0, *)
 public struct GlassBackgroundModifier: ViewModifier {
     /// Controls when the glass effect should be displayed
@@ -21,9 +34,17 @@ public struct GlassBackgroundModifier: ViewModifier {
         case reverted  // Light at top-right and bottom-left
     }
     
+    /// Determines the shape of the glass effect
+    public enum GlassShape {
+        case roundedRectangle(radius: CGFloat)  // Rounded rectangle with custom corner radius
+        case circle                             // Perfect circle
+        case capsule                           // Capsule shape (pill-shaped)
+    }
+    
     // Configuration properties for the glass effect
     let displayMode: GlassBackgroundDisplayMode
     let radius: CGFloat
+    let shape: GlassShape
     let color: Color
     let colorOpacity: Double
     let material: Material
@@ -41,6 +62,7 @@ public struct GlassBackgroundModifier: ViewModifier {
     public init(
         displayMode: GlassBackgroundDisplayMode,
         radius: CGFloat,
+        shape: GlassShape,
         color: Color,
         colorOpacity: Double,
         material: Material,
@@ -56,6 +78,7 @@ public struct GlassBackgroundModifier: ViewModifier {
     ) {
         self.displayMode = displayMode
         self.radius = radius
+        self.shape = shape
         self.color = color
         self.colorOpacity = colorOpacity
         self.material = material
@@ -90,28 +113,35 @@ public struct GlassBackgroundModifier: ViewModifier {
         // Not in toolbar - apply glass effect based on iOS version
         #if swift(>=6.0) && canImport(SwiftUI, _version: 6.0)
         if #available(iOS 26.0, macOS 26.0, watchOS 26.0, tvOS 26.0, visionOS 26.0, *) {
-            return AnyView(
-                content
-                    #if !os(visionOS)
-                    .glassEffect(.regular.tint(color.opacity(colorOpacity)).interactive(), in: .rect(cornerRadius: radius))
-                    #else
-                    .background(color.opacity(colorOpacity))
-                    .background(material)
-                    .cornerRadius(radius)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: radius)
-                            .stroke(
-                                LinearGradient(
-                                    gradient: Gradient(colors: gradientColors()),
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                ),
-                                lineWidth: strokeWidth
-                            )
-                    )
-                    #endif
-                    .shadow(color: shadowColor.opacity(shadowOpacity), radius: shadowRadius, x: shadowX, y: shadowY)
-            )
+            // On iOS 26+, use native glassEffect API for rounded rectangles
+            // For circle and capsule, use fallback to ensure proper shape support
+            if case .roundedRectangle(let radius) = shape {
+                return AnyView(
+                    content
+                        #if !os(visionOS)
+                        .glassEffect(.regular.tint(color.opacity(colorOpacity)).interactive(), in: .rect(cornerRadius: radius))
+                        #else
+                        .background(color.opacity(colorOpacity))
+                        .background(material)
+                        .clipShape(shapeForClipping())
+                        .overlay(
+                            shapeForOverlay()
+                                .stroke(
+                                    LinearGradient(
+                                        gradient: Gradient(colors: gradientColors()),
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    ),
+                                    lineWidth: strokeWidth
+                                )
+                        )
+                        #endif
+                        .shadow(color: shadowColor.opacity(shadowOpacity), radius: shadowRadius, x: shadowX, y: shadowY)
+                )
+            } else {
+                // For circle and capsule, use fallback implementation
+                return AnyView(fallbackGlassEffect(content: content))
+            }
         } else {
             return AnyView(fallbackGlassEffect(content: content))
         }
@@ -126,10 +156,10 @@ public struct GlassBackgroundModifier: ViewModifier {
             content
                 .background(color.opacity(colorOpacity))
                 .background(material) // Use the specified material for the frosted glass base
-                .cornerRadius(radius) // Rounds the corners
+                .clipShape(shapeForClipping()) // Clip to the specified shape
                 .overlay(
                     // Adds subtle gradient border for dimensional effect
-                    RoundedRectangle(cornerRadius: radius)
+                    shapeForOverlay()
                         .stroke(
                             LinearGradient(
                                 gradient: Gradient(colors: gradientColors()),
@@ -142,6 +172,30 @@ public struct GlassBackgroundModifier: ViewModifier {
                 // Adds shadow for depth and elevation
                 .shadow(color: shadowColor.opacity(shadowOpacity), radius: shadowRadius, x: shadowX, y: shadowY)
         )
+    }
+    
+    /// Returns the appropriate shape for clipping
+    private func shapeForClipping() -> AnyShape {
+        switch shape {
+        case .roundedRectangle(let radius):
+            return AnyShape(RoundedRectangle(cornerRadius: radius))
+        case .circle:
+            return AnyShape(Circle())
+        case .capsule:
+            return AnyShape(Capsule())
+        }
+    }
+    
+    /// Returns the appropriate shape for overlay stroke
+    private func shapeForOverlay() -> AnyShape {
+        switch shape {
+        case .roundedRectangle(let radius):
+            return AnyShape(RoundedRectangle(cornerRadius: radius))
+        case .circle:
+            return AnyShape(Circle())
+        case .capsule:
+            return AnyShape(Capsule())
+        }
     }
     
     /// Generates the gradient colors based on the selected style

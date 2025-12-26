@@ -40,6 +40,7 @@ public extension View {
     func glass(
         displayMode: GlassBackgroundModifier.GlassBackgroundDisplayMode = .always,
         radius: CGFloat = 32,
+        shape: GlassBackgroundModifier.GlassShape? = nil,
         color: Color = .white,
         colorOpacity: Double = 0.1,
         material: Material = .ultraThinMaterial,
@@ -71,6 +72,7 @@ public extension View {
         return modifier(GlassBackgroundModifier(
             displayMode: displayMode,
             radius: radius,
+            shape: shape ?? .roundedRectangle(radius: radius),
             color: color,
             colorOpacity: colorOpacity,
             material: material,

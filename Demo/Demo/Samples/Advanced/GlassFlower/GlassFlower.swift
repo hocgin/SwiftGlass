@@ -32,32 +32,7 @@ struct GlassFlower: View {
             // Flower petals: Eight capsules arranged in a circle pattern
             // Each petal is a gradient-filled capsule with glass effect applied
             ForEach(0..<8, id: \.self) { index in
-                Capsule()
-                    .fill(
-                        LinearGradient(
-                            gradient: Gradient(stops: [
-                                .init(color: colors[index % colors.count], location: 0),
-                                .init(color: colors[index % colors.count].opacity(0.5), location: 1)
-                            ]),
-                            startPoint: .bottom,
-                            endPoint: .top
-                        )
-                    )
-                
-                    // Apply glass effect from SwiftGlass library to create translucent look
-                    .glass(color: colors[index % colors.count], colorOpacity: 1, shadowColor: .white)
-                
-                    .frame(width: 55, height: 100) // Petal dimensions
-                    .offset(x: 0, y: 0) // Position petals away from center
-                    .rotationEffect(.degrees(Double(index) * 45), anchor: .bottom) // Distribute evenly in 360° (8×45°)
-                    .offset(y: -50) // Adjust vertical position of entire flower
-                    .scaleEffect(isPulsing ? 0.97 : 1.05) // Size animation range
-                    .animation(
-                        Animation.easeInOut(duration: 2.0)
-                            .delay(Double(index) * 0.1) // Staggered animation for flowing effect
-                            .repeatForever(autoreverses: true),
-                        value: isPulsing
-                    )
+                petalView(for: index)
             }
         }
         .frame(width: 300, height: 300)
@@ -65,6 +40,33 @@ struct GlassFlower: View {
         .onAppear {
             isPulsing.toggle()
         }
+    }
+    
+    @ViewBuilder
+    private func petalView(for index: Int) -> some View {
+        let color = colors[index % colors.count]
+        let gradient = LinearGradient(
+            gradient: Gradient(stops: [
+                .init(color: color, location: 0),
+                .init(color: color.opacity(0.5), location: 1)
+            ]),
+            startPoint: .bottom,
+            endPoint: .top
+        )
+        let rotation = Double(index) * 45
+        let animation = Animation.easeInOut(duration: 2.0)
+            .delay(Double(index) * 0.1)
+            .repeatForever(autoreverses: true)
+        
+        Capsule()
+            .fill(gradient)
+            .glass(color: color, colorOpacity: 1, shadowColor: .white)
+            .frame(width: 55, height: 100)
+            .offset(x: 0, y: 0)
+            .rotationEffect(.degrees(rotation), anchor: .bottom)
+            .offset(y: -50)
+            .scaleEffect(isPulsing ? 0.97 : 1.05)
+            .animation(animation, value: isPulsing)
     }
 }
 
