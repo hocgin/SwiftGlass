@@ -76,45 +76,47 @@ public struct GlassBackgroundModifier: ViewModifier {
     /// 2. Gradient stroke for edge highlighting
     /// 3. Shadow for depth perception
     public func body(content: Content) -> some View {
-        #if swift(>=6.0) && canImport(SwiftUI, _version: 6.0)
-        // Use new glass effect APIs available in newer Xcode/Swift versions
-        if #available(iOS 26.0, macOS 26.0, watchOS 26.0, tvOS 26.0, visionOS 26.0, *) {
-            // Check if content is in a toolbar context
-            if isInToolbar {
-                AnyView(
-                    content
-                        .tint(color)
-                )
-            } else {
-                AnyView(
-                    content
-                        #if !os(visionOS)
-                        .glassEffect(.regular.tint(color.opacity(colorOpacity)).interactive(), in: .rect(cornerRadius: radius))
-                        #else
-                        .background(color.opacity(colorOpacity))
-                        .background(material)
-                        .cornerRadius(radius)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: radius)
-                                .stroke(
-                                    LinearGradient(
-                                        gradient: Gradient(colors: gradientColors()),
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    ),
-                                    lineWidth: strokeWidth
-                                )
-                        )
-                        #endif
-                        .shadow(color: shadowColor.opacity(shadowOpacity), radius: shadowRadius, x: shadowX, y: shadowY)
-                )
+        // Check isInToolbar and iOS version first
+        if isInToolbar {
+            // Check if we're on iOS 26+
+            if #available(iOS 26.0, macOS 26.0, watchOS 26.0, tvOS 26.0, visionOS 26.0, *) {
+                // On iOS 26+, return content with tint only (no glass effect, no border)
+                return AnyView(content.tint(color))
             }
+            // On iOS 18 and below, still apply glass effect when in toolbar
+            return AnyView(fallbackGlassEffect(content: content))
+        }
+        
+        // Not in toolbar - apply glass effect based on iOS version
+        #if swift(>=6.0) && canImport(SwiftUI, _version: 6.0)
+        if #available(iOS 26.0, macOS 26.0, watchOS 26.0, tvOS 26.0, visionOS 26.0, *) {
+            return AnyView(
+                content
+                    #if !os(visionOS)
+                    .glassEffect(.regular.tint(color.opacity(colorOpacity)).interactive(), in: .rect(cornerRadius: radius))
+                    #else
+                    .background(color.opacity(colorOpacity))
+                    .background(material)
+                    .cornerRadius(radius)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: radius)
+                            .stroke(
+                                LinearGradient(
+                                    gradient: Gradient(colors: gradientColors()),
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                lineWidth: strokeWidth
+                            )
+                    )
+                    #endif
+                    .shadow(color: shadowColor.opacity(shadowOpacity), radius: shadowRadius, x: shadowX, y: shadowY)
+            )
         } else {
-            AnyView(fallbackGlassEffect(content: content))
+            return AnyView(fallbackGlassEffect(content: content))
         }
         #else
-        // Fallback for older Xcode versions (16.4 and earlier)
-        AnyView(fallbackGlassEffect(content: content))
+        return AnyView(fallbackGlassEffect(content: content))
         #endif
     }
     
