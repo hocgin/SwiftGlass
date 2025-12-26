@@ -17,6 +17,7 @@
 🔄 **Cross-platform**: Works on iOS, macOS, watchOS, tvOS, and visionOS<br/>
 ✨ **Native visionOS support**: Uses native glass effect on visionOS<br/>
 🎨 **Highly customizable**: Adjust colors, materials, shadows, and more<br/>
+🔷 **Multiple shapes**: Support for rounded rectangle, circle, and capsule shapes<br/>
 🧩 **SwiftUI integration**: Simple ViewModifier implementation
 
 ## Gallery
@@ -117,6 +118,27 @@ VStack {
 )
 ```
 
+### Different Shapes
+
+SwiftGlass supports multiple shapes for the glass effect:
+
+```swift
+// Circle shape
+Image(systemName: "heart.fill")
+    .frame(width: 100, height: 100)
+    .glass(shape: .circle, color: .pink)
+
+// Capsule shape (pill-shaped)
+Button("Play Music") { }
+    .padding()
+    .glass(shape: .capsule, color: .blue)
+
+// Rounded rectangle (default)
+Text("Hello")
+    .padding()
+    .glass(radius: 20, shape: .roundedRectangle(radius: 20))
+```
+
 ## Customization
 
 SwiftGlass offers extensive customization options:
@@ -124,7 +146,8 @@ SwiftGlass offers extensive customization options:
 | Parameter | Type | Default | Description |
 |---|---|---|---|
 | `displayMode` | `.always` or `.automatic` | `.always` | Controls when the effect is displayed |
-| `radius` | `CGFloat` | `32` | Corner radius of the glass effect |
+| `radius` | `CGFloat` | `32` | Corner radius of the glass effect (for rounded rectangle) |
+| `shape` | `.roundedRectangle(radius:)`, `.circle`, or `.capsule` | `.roundedRectangle(radius: radius)` | Shape of the glass effect |
 | `color` | `Color` | System background color | Base color for gradient and highlights |
 | `colorOpacity` | `Double` | `0.1` | Opacity level for the base color |
 | `material` | `Material` | `.ultraThinMaterial` | SwiftUI material style |
