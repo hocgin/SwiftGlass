@@ -10,11 +10,9 @@ import SwiftGlass
 
 struct Basic: View {
     var body: some View {
-        ZStack {
-            
-#if !os(visionOS) && !os(watchOS) && !os(macOS)
-            background
-#endif
+        ScrollView(.vertical) {
+            VStack {
+                ZStack {
 
             container
 #if !os(watchOS)
@@ -25,14 +23,34 @@ struct Basic: View {
                 .glass()
             
 #if os(tvOS)
-                .frame(maxWidth: 500)
+                        .frame(maxWidth: 500)
 #elseif !os(watchOS)
-                .frame(maxWidth: 300)
+                        .frame(maxWidth: 300)
 #else
-                .frame(maxWidth: 175)
+                        .frame(maxWidth: 175)
 #endif
-            
+                }
+            }
+            .frame(height: 2000)
+            .frame(maxWidth: .infinity)
+            .background {
+                LinearGradient(stops: [
+                    .init(color: Color.red, location: 0),
+                    .init(color: Color.blue, location: 0.3),
+                    .init(color: Color.white, location: 0.5),
+                    .init(color: Color.black, location: 1)
+                ], startPoint: .top, endPoint: .bottom)
+            }
         }
+        .overlay(alignment: .center, content: {
+            VStack(alignment: .center) {
+                Text("Hello World!")
+            }
+            .frame(maxWidth: .infinity)
+            .padding(15)
+            .glass(style: .clear)
+            .frame(maxWidth: 175)
+        })
     }
     
     // Sample Card Content
@@ -64,10 +82,13 @@ struct Basic: View {
                 HStack {
                     Spacer()
 #if !os(watchOS)
-                    Label("Open Garage", systemImage:"door.garage.closed.trianglebadge.exclamationmark")
-                        .font(.body.bold())
-                        .symbolRenderingMode(.multicolor)
-                        .font(.caption)
+                    Label(
+                        "Open Garage",
+                        systemImage:"door.garage.closed.trianglebadge.exclamationmark"
+                    )
+                    .font(.body.bold())
+                    .symbolRenderingMode(.multicolor)
+                    .font(.caption)
 #else
                     Label("Open", systemImage:"door.garage.closed")
                         .bold()
@@ -85,7 +106,7 @@ struct Basic: View {
             .buttonBorderShape(.capsule)
 #endif
             .tint(.orange)
-            .glass(color: .yellow)
+            .glass(color: .yellow, style: .clear)
         }
     }
     
@@ -95,14 +116,16 @@ struct Basic: View {
             Color.black
                 .ignoresSafeArea()
             
-            AsyncImage(url: URL(string: "https://shareby.vercel.app/3vj7gk")) { image in
+            AsyncImage(
+                url: URL(string: "https://shareby.vercel.app/3vj7gk")
+            ) { image in
                 image
                     .resizable()
                     .scaledToFill()
             } placeholder: {
                 ProgressView()
             }.opacity(0.3)
-            .ignoresSafeArea()
+                .ignoresSafeArea()
         }
     }
 }

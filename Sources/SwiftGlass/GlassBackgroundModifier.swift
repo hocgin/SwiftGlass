@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import UIKit
 
 /// Type-erased shape wrapper
 private struct AnyShape: Shape {
@@ -34,6 +35,12 @@ public struct GlassBackgroundModifier: ViewModifier {
         case reverted  // Light at top-right and bottom-left
     }
     
+    
+    public enum GlassStyle {
+        case regular
+        case clear
+    }
+    
     /// Determines the shape of the glass effect
     public enum GlassShape {
         case roundedRectangle(radius: CGFloat)  // Rounded rectangle with custom corner radius
@@ -57,6 +64,7 @@ public struct GlassBackgroundModifier: ViewModifier {
     let shadowX: CGFloat
     let shadowY: CGFloat
     let isInToolbar: Bool
+    let style: GlassStyle
     
     /// Creates a new glass effect modifier with the specified appearance settings
     public init(
@@ -74,7 +82,8 @@ public struct GlassBackgroundModifier: ViewModifier {
         shadowRadius: CGFloat?,
         shadowX: CGFloat,
         shadowY: CGFloat,
-        isInToolbar: Bool
+        isInToolbar: Bool,
+        style: GlassStyle
     ) {
         self.displayMode = displayMode
         self.radius = radius
@@ -91,6 +100,7 @@ public struct GlassBackgroundModifier: ViewModifier {
         self.shadowX = shadowX
         self.shadowY = shadowY
         self.isInToolbar = isInToolbar
+        self.style = style
     }
     
     /// Applies the glass effect to the content view
@@ -154,8 +164,12 @@ public struct GlassBackgroundModifier: ViewModifier {
     private func fallbackGlassEffect(content: Content) -> AnyView {
         return AnyView(
             content
-                .background(color.opacity(colorOpacity))
-                .background(material) // Use the specified material for the frosted glass base
+//                .background(color.opacity(colorOpacity))
+                .if(style == .clear, then: {
+                    $0.background(UltraLightGlass(alpha: 0.35))
+                }, else: {
+                    $0.background(material)
+                }) // Use the specified material for the frosted glass base
                 .clipShape(shapeForClipping()) // Clip to the specified shape
                 .overlay(
                     // Adds subtle gradient border for dimensional effect
@@ -219,3 +233,57 @@ public struct GlassBackgroundModifier: ViewModifier {
         }
     }
 }
+
+fileprivate extension View {
+    @ViewBuilder
+    func `if`<TrueContent: View, FalseContent: View>(
+        _ condition: Bool,
+        @ViewBuilder then: (Self) -> TrueContent,
+        @ViewBuilder `else`: (Self) -> FalseContent
+    ) -> some View {
+        Group {
+            if condition {
+                then(self)
+            } else {
+                `else`(self)
+            }
+        }
+    }
+}
+
+fileprivate struct UltraLightGlass: View {
+    var alpha: Double = 0.4
+
+    var body: some View {
+        #if os(iOS) || os(tvOS)
+        UltraLightBlur(alpha: alpha)
+        #else
+        Color.white.opacity(alpha * 0.3)
+        #endif
+    }
+}
+
+#if os(iOS) || os(tvOS)
+
+import SwiftUI
+import UIKit
+
+@available(iOS 15.0, tvOS 15.0, *)
+fileprivate struct UltraLightBlur: UIViewRepresentable {
+
+    var blurStyle: UIBlurEffect.Style = .systemUltraThinMaterial
+    var alpha: CGFloat = 0.4
+
+    func makeUIView(context: Context) -> UIVisualEffectView {
+        let effect = UIBlurEffect(style: blurStyle)
+        let view = UIVisualEffectView(effect: effect)
+        view.alpha = alpha
+        return view
+    }
+
+    func updateUIView(_ uiView: UIVisualEffectView, context: Context) {
+        uiView.alpha = alpha
+    }
+}
+
+#endif

@@ -62,7 +62,8 @@ public extension View {
         shadowRadius: CGFloat? = nil,
         shadowX: CGFloat = 0,
         shadowY: CGFloat = 5,
-        isInToolbar: Bool = false
+        isInToolbar: Bool = false,
+        style: GlassBackgroundModifier.GlassStyle = .regular
     ) -> some View {
         #if os(visionOS)
         // Use the native glass effect on visionOS for optimal rendering and system integration
@@ -84,7 +85,8 @@ public extension View {
             shadowRadius: shadowRadius,
             shadowX: shadowX,
             shadowY: shadowY,
-            isInToolbar: isInToolbar
+            isInToolbar: isInToolbar,
+            style: style,
         ))
         #endif
     }
