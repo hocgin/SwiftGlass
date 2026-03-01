@@ -9,6 +9,9 @@ import SwiftUI
 import SwiftGlass
 
 struct Basic: View {
+    
+    @State var open: Bool = false
+    
     var body: some View {
         ScrollView(.vertical) {
             VStack {
@@ -44,11 +47,13 @@ struct Basic: View {
         }
         .overlay(alignment: .center, content: {
             VStack(alignment: .center) {
-                Text("Hello World!")
+                Text("Hello World!").onTapGesture {
+                    open.toggle()
+                }
             }
             .frame(maxWidth: .infinity)
             .padding(15)
-            .glass(style: .clear)
+            .glass(style: open ? .regular : .clear)
             .frame(maxWidth: 175)
         })
     }
