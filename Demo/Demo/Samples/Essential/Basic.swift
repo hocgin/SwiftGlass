@@ -15,6 +15,7 @@ struct Basic: View {
     var body: some View {
         ScrollView(.vertical) {
             VStack {
+                Text("sdjksjsload_eligibility_plist: Failed to open /Users/hocgin/Library/Developer/CoreSimulator/Devices/80D82288-6555-48AC-8279-54BDDA81EF6C/data/Containers/Data/Application/75225E43-0A35-4121-97C7-120BBCC67544/private/var/db/eligibilityd/eligibility.plist: No such file or directory(2)load_eligibility_plist: Failed to open /Users/hocgin/Library/Developer/CoreSimulator/Devices/80D82288-6555-48AC-8279-54BDDA81EF6C/data/Containers/Data/Application/75225E43-0A35-4121-97C7-120BBCC67544/private/var/db/eligibilityd/eligibility.plist: No such file or directory(2)load_eligibility_plist: Failed to open /Users/hocgin/Library/Developer/CoreSimulator/Devices/80D82288-6555-48AC-8279-54BDDA81EF6C/data/Containers/Data/Application/75225E43-0A35-4121-97C7-120BBCC67544/private/var/db/eligibilityd/eligibility.plist: No such file or directory(2)load_eligibility_plist: Failed to open /Users/hocgin/Library/Developer/CoreSimulator/Devices/80D82288-6555-48AC-8279-54BDDA81EF6C/data/Containers/Data/Application/75225E43-0A35-4121-97C7-120BBCC67544/private/var/db/eligibilityd/eligibility.plist: No such file or directory(2)")
                 ZStack {
 
             container
@@ -39,8 +40,13 @@ struct Basic: View {
             .background {
                 LinearGradient(stops: [
                     .init(color: Color.red, location: 0),
+                    .init(color: Color.red, location: 0.1),
+                    .init(color: Color.blue, location: 0.2),
                     .init(color: Color.blue, location: 0.3),
+                    .init(color: Color.white, location: 0.4),
                     .init(color: Color.white, location: 0.5),
+                    .init(color: Color.black, location: 0.6),
+                    .init(color: Color.black, location: 0.7),
                     .init(color: Color.black, location: 1)
                 ], startPoint: .top, endPoint: .bottom)
             }
