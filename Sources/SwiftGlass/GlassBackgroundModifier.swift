@@ -166,9 +166,9 @@ public struct GlassBackgroundModifier: ViewModifier {
             content
 //                .background(color.opacity(colorOpacity))
                 .if(style == .clear, then: {
-                    $0.background(UltraLightGlass(alpha: 0.35))
+                    $0.background(UltraLightGlass(alpha: 0.35).allowsHitTesting(false))
                 }, else: {
-                    $0.background(material)
+                    $0.background(color.opacity(colorOpacity)).background(material)
                 }) // Use the specified material for the frosted glass base
                 .clipShape(shapeForClipping()) // Clip to the specified shape
                 .overlay(
@@ -252,13 +252,14 @@ fileprivate extension View {
 }
 
 fileprivate struct UltraLightGlass: View {
+    var color: Color = .white
     var alpha: Double = 0.4
 
     var body: some View {
         #if os(iOS) || os(tvOS)
         UltraLightBlur(alpha: alpha)
         #else
-        Color.white.opacity(alpha * 0.3)
+        color.opacity(alpha * 0.3)
         #endif
     }
 }
@@ -278,6 +279,7 @@ fileprivate struct UltraLightBlur: UIViewRepresentable {
         let effect = UIBlurEffect(style: blurStyle)
         let view = UIVisualEffectView(effect: effect)
         view.alpha = alpha
+        view.isUserInteractionEnabled = false
         return view
     }
 
