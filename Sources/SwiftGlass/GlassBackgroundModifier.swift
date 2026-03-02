@@ -161,13 +161,16 @@ public struct GlassBackgroundModifier: ViewModifier {
     
     /// Fallback glass effect implementation for older Xcode versions
     private func fallbackGlassEffect(content: Content) -> some View {
-        return content
-        //                .background(color.opacity(colorOpacity))
-                        .if(style == .clear, then: {
-                            $0.background(UltraLightGlass(color: color, alpha: colorOpacity))
-                        }, else: {
-                            $0.background(color.opacity(colorOpacity)).background(material)
-                        }) // Use the specified material for the frosted glass base
+        return content.background {
+                            Group {
+                                    if style == .clear {
+                                        UltraLightGlass(color: color, alpha: colorOpacity)
+                                    } else {
+                                        color.opacity(colorOpacity).background(material)
+                                    }
+                                }
+                                .allowsHitTesting(false)
+                        }  // Use the specified material for the frosted glass base
                         .clipShape(shapeForClipping()) // Clip to the specified shape
                         .overlay(
                             // Adds subtle gradient border for dimensional effect
@@ -180,6 +183,7 @@ public struct GlassBackgroundModifier: ViewModifier {
                                     ),
                                     lineWidth: strokeWidth
                                 )
+                                .allowsHitTesting(false) 
                         )
                         // Adds shadow for depth and elevation
                         .shadow(color: shadowColor.opacity(shadowOpacity), radius: shadowRadius, x: shadowX, y: shadowY)
