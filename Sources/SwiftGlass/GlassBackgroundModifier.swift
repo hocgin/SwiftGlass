@@ -107,30 +107,28 @@ public struct GlassBackgroundModifier: ViewModifier {
     /// Implementation uses three primary techniques:
     /// 1. Material background for the frosted effect
     /// 2. Gradient stroke for edge highlighting
-    /// 3. Shadow for depth perception
     public func body(content: Content) -> some View {
         // Check isInToolbar and iOS version first
         if isInToolbar {
             // Check if we're on iOS 26+
             if #available(iOS 26.0, macOS 26.0, watchOS 26.0, tvOS 26.0, visionOS 26.0, *) {
                 // On iOS 26+, return content with tint only (no glass effect, no border)
-                return AnyView(content.tint(color))
+                content.tint(color)
+            } else {
+                // On iOS 18 and below, still apply glass effect when in toolbar
+                fallbackGlassEffect(content: content)
             }
-            // On iOS 18 and below, still apply glass effect when in toolbar
-            return AnyView(fallbackGlassEffect(content: content))
-        }
-        
-        // Not in toolbar - apply glass effect based on iOS version
-        #if swift(>=6.0) && canImport(SwiftUI, _version: 6.0)
-        if #available(iOS 26.0, macOS 26.0, watchOS 26.0, tvOS 26.0, visionOS 26.0, *) {
-            // On iOS 26+, use native glassEffect API for rounded rectangles
-            // For circle and capsule, use fallback to ensure proper shape support
-            if case .roundedRectangle(let radius) = shape {
-                return AnyView(
+        } else {
+            // Not in toolbar - apply glass effect based on iOS version
+            #if swift(>=6.0) && canImport(SwiftUI, _version: 6.0)
+            if #available(iOS 26.0, macOS 26.0, watchOS 26.0, tvOS 26.0, visionOS 26.0, *) {
+                // On iOS 26+, use native glassEffect API for rounded rectangles
+                // For circle and capsule, use fallback to ensure proper shape support
+                if case .roundedRectangle(let radius) = shape {
                     content
-                        #if !os(visionOS)
+#if !os(visionOS)
                         .glassEffect(.regular.tint(color.opacity(colorOpacity)).interactive(), in: .rect(cornerRadius: radius))
-                        #else
+#else
                         .background(color.opacity(colorOpacity))
                         .background(material)
                         .clipShape(shapeForClipping())
@@ -145,47 +143,46 @@ public struct GlassBackgroundModifier: ViewModifier {
                                     lineWidth: strokeWidth
                                 )
                         )
-                        #endif
+#endif
                         .shadow(color: shadowColor.opacity(shadowOpacity), radius: shadowRadius, x: shadowX, y: shadowY)
-                )
+                } else {
+                    // For circle and capsule, use fallback implementation
+                    fallbackGlassEffect(content: content)
+                }
             } else {
-                // For circle and capsule, use fallback implementation
-                return AnyView(fallbackGlassEffect(content: content))
+                fallbackGlassEffect(content: content)
             }
-        } else {
-            return AnyView(fallbackGlassEffect(content: content))
+            #else
+            fallbackGlassEffect(content: content)
+            #endif
         }
-        #else
-        return AnyView(fallbackGlassEffect(content: content))
-        #endif
+        
     }
     
     /// Fallback glass effect implementation for older Xcode versions
-    private func fallbackGlassEffect(content: Content) -> AnyView {
-        return AnyView(
-            content
-//                .background(color.opacity(colorOpacity))
-                .if(style == .clear, then: {
-                    $0.background(UltraLightGlass(color: color, alpha: colorOpacity))
-                }, else: {
-                    $0.background(color.opacity(colorOpacity)).background(material)
-                }) // Use the specified material for the frosted glass base
-                .clipShape(shapeForClipping()) // Clip to the specified shape
-                .overlay(
-                    // Adds subtle gradient border for dimensional effect
-                    shapeForOverlay()
-                        .stroke(
-                            LinearGradient(
-                                gradient: Gradient(colors: gradientColors()),
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ),
-                            lineWidth: strokeWidth
+    private func fallbackGlassEffect(content: Content) -> some View {
+        return content
+        //                .background(color.opacity(colorOpacity))
+                        .if(style == .clear, then: {
+                            $0.background(UltraLightGlass(color: color, alpha: colorOpacity))
+                        }, else: {
+                            $0.background(color.opacity(colorOpacity)).background(material)
+                        }) // Use the specified material for the frosted glass base
+                        .clipShape(shapeForClipping()) // Clip to the specified shape
+                        .overlay(
+                            // Adds subtle gradient border for dimensional effect
+                            shapeForOverlay()
+                                .stroke(
+                                    LinearGradient(
+                                        gradient: Gradient(colors: gradientColors()),
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    ),
+                                    lineWidth: strokeWidth
+                                )
                         )
-                )
-                // Adds shadow for depth and elevation
-                .shadow(color: shadowColor.opacity(shadowOpacity), radius: shadowRadius, x: shadowX, y: shadowY)
-        )
+                        // Adds shadow for depth and elevation
+                        .shadow(color: shadowColor.opacity(shadowOpacity), radius: shadowRadius, x: shadowX, y: shadowY)
     }
     
     /// Returns the appropriate shape for clipping
